@@ -8,7 +8,7 @@
 ;;
 ;; Created: Mar 5, 2010
 ;; Version: 0.02
-;; Keywords: redmine web
+;; Keywords: redmine web bts
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@
 
 ;;; Commentary:
 
-;; redmine.el is a major mode for redmine.el
-;; You can see lists --issues, activity and revisions-- with anything.el,
+;; redmine.el is an utility for redmine.el
+;; You can see lists of issues, activity and revisions with anything.el,
 ;;   and view the detail with your browser.
 
 ;;; Commands:
