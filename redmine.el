@@ -7,7 +7,7 @@
 ;; Blog: http://e-arrows.sakura.ne.jp/
 ;;
 ;; Created: Mar 5, 2010
-;; Version: 0.01
+;; Version: 0.02
 ;; Keywords: redmine web
 
 ;; This file is free software; you can redistribute it and/or modify
@@ -40,6 +40,8 @@
 ;;   Display the recent activity with anything.el
 ;; `redmine-show-revisions'
 ;;   Display the recent revisions with anything.el
+;; `redmine-select-project'
+;;   Change a project
 
 ;;; Settings:
 
@@ -47,37 +49,47 @@
 ;; See below for example.
 
 ;; (require 'redmine)
-;; (setq redmine-issues-uri "http://redmine.openpne.jp/projects/op3/issues.atom")
-;; (setq redmine-activity-uri "http://redmine.openpne.jp/projects/op3/activity.atom")
-;; (setq redmine-revisions-uri "http://redmine.openpne.jp/projects/op3/repository/revisions.atom")
+;; (setq redmine-project-alist
+;;       '(("OpenPNE3" . "http://redmine.openpne.jp/projects/op3/")
+;;         ("Redmine" . "http://www.redmine.org/projects/redmine/")))
 ;; (setq redmine-key "Your Private Access Key")
 
 ;;; Code:
 
 (require 'anything)
 (require 'xml)
+(eval-when-compile (require 'cl))
 
 ;;====================
 ;; Configurations
 ;;====================
 (defvar redmine-key nil "An access key for your private")
-(defvar redmine-issues-uri nil "An URI of recent issues xml")
-(defvar redmine-activity-uri nil "An URI of activity xml")
-(defvar redmine-revisions-uri nil "An URI of revisions xml")
+(defvar redmine-project nil "Use this project as default")
+(defvar redmine-project-alist '(nil) "Your Redmines assoc list")
 
 ;;====================
 ;; Uritilites
 ;;====================
 (defun redmine-get-xml (uri)
   (car (with-temp-buffer
-         (call-process "/usr/bin/curl" nil (current-buffer) nil uri)
+         (call-process "curl" nil (current-buffer) nil uri "-s")
          (xml-parse-region (point-min) (point-max)))))
 
 (defun redmine-xml->entries (xml)
   (xml-get-children xml 'entry))
 
-(defun redmine-uri/key (uri)
-  (concat uri "?key=" redmine-key))
+(defun redmine-uri (action type)
+  (format "%s%s?format=%s&key=%s"
+          (if redmine-project
+              (cdr (assoc redmine-project redmine-project-alist))
+            (cdar redmine-project-alist))
+          action type (or redmine-key "")))
+
+(defun redmine-project-put-first! (key)
+  (setq redmine-project-alist
+        (cons
+         (assoc key redmine-project-alist)
+         (remove-if (lambda (e) (equal key (car e))) redmine-project-alist))))
 
 ;;====================
 ;; Entry Methods
@@ -98,22 +110,33 @@
       (candidates . ,(redmine-get-tickets uri))
       (candidate-transformer . (lambda (candidates)
                                  (mapcar
-                                  #'(lambda (c) (apply 'cons (split-string c "\t")))
+                                  (lambda (c) (apply 'cons (split-string c "\t")))
                                   candidates)))
       (volatile)
       (action . browse-url)))))
 
 (defun redmine-show-issues-all ()
   (interactive)
-  (redmine-show-anything "Tickets" (redmine-uri/key redmine-issues-uri)))
+  (redmine-show-anything "Tickets" (redmine-uri "issues" "atom")))
 
 (defun redmine-show-activity ()
   (interactive)
-  (redmine-show-anything "Activity" (redmine-uri/key redmine-activity-uri)))
+  (redmine-show-anything "Activity" (redmine-uri "activity" "atom")))
 
 (defun redmine-show-revisions ()
   (interactive)
-  (redmine-show-anything "Revisions" (redmine-uri/key redmine-revisions-uri)))
+  (redmine-show-anything "Revisions" (redmine-uri "repository/revisions" "atom")))
+
+(defun redmine-select-project ()
+  (interactive)
+  (anything
+   `(((name . "Select Project")
+      (candidates . ,(mapcar 'car redmine-project-alist))
+      (volatile)
+      (action . (lambda (p)
+                  (setq redmine-project p)
+                  (redmine-project-put-first! p)
+                  (message (format "Redmine Project was changed to \"%s\"." p))))))))
 
 (provide 'redmine)
 ;;; redmine.el ends here
