@@ -70,7 +70,7 @@
 ;;====================
 (defun redmine-get-xml (uri)
   (car (with-temp-buffer
-         (call-process "curl" nil (current-buffer) nil uri "-s")
+         (call-process "curl" nil (current-buffer) nil uri "-s" "-k")
          (xml-parse-region (point-min) (point-max)))))
 
 (defun redmine-xml->entries (xml)
