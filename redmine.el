@@ -64,6 +64,7 @@
 ;;====================
 (defvar redmine-project nil "Use this project as default")
 (defvar redmine-project-alist '(nil) "Your Redmines assoc list")
+(defvar anything-redmine-buffer-name "*anything-redmine*")
 
 ;;====================
 ;; For XML
@@ -124,7 +125,9 @@
                                   (lambda (c) (apply 'cons (split-string c "\t")))
                                   candidates)))
       (volatile)
-      (action . browse-url)))))
+      (migemo)
+      (action . browse-url)))
+   nil nil nil nil anything-redmine-buffer-name))
 
 ;;====================
 ;; Main
