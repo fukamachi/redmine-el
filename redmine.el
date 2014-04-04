@@ -57,6 +57,7 @@
 
 (require 'anything)
 (require 'xml)
+(require 'url)
 (eval-when-compile (require 'cl))
 
 ;;====================
@@ -71,7 +72,7 @@
 ;;====================
 (defun redmine-get-xml (uri)
   (car (with-temp-buffer
-         (call-process "curl" nil (current-buffer) nil uri "-s" "-k")
+         (url-insert-file-contents uri)
          (xml-parse-region (point-min) (point-max)))))
 
 (defun redmine-xml->entries (xml)
